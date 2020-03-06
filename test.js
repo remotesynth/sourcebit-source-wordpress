@@ -1,4 +1,5 @@
 var WPAPI = require( 'wpapi' );
+
 /*WPAPI.discover('http://testsite.local/')
 .then(function( site ) {
     wordpress can support custom types but we'll only deal with posts and pages for now
@@ -15,11 +16,12 @@ var WPAPI = require( 'wpapi' );
         console.log( media );
     });
 });*/
-async function test() {
-    const site = await WPAPI.discover('http://testsite.local/')
-    const posts = await site.posts();
-
-    console.log(Object.keys(posts));
-}
-
-test();
+(async () => {
+    try {
+        const site = await WPAPI.discover('http://testssite.local/')
+        console.log(site);
+    }
+    catch (error) {
+        console.log(error);
+    }
+})();

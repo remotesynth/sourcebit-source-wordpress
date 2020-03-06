@@ -31,9 +31,9 @@ const turndownService = new TurndownService();
  *                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.options = {
-  mySecret: {
+  wpapiURL: {
     // 👉 The value will be read from `process.env.MY_SECRET`.
-    env: "MY_SECRET",
+    env: "WPAPI_URL",
 
     // 👉 When running the interactive setup process, this
     // option will be stored in an `.env` file instead of the
@@ -285,7 +285,7 @@ module.exports.transform = ({
  *    plugins during the setup process.                      *
  *                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-module.exports.getSetup = ({
+module.exports.getSetup = async ({
   chalk,
   context,
   currentOptions,
@@ -296,32 +296,31 @@ module.exports.getSetup = ({
   ora,
   setSetupContext
 }) => {
-  const questions = [
+  const answers = {};
+  const { wpapiURL } = await inquirer.prompt([
     {
-      type: "confirm",
-      name: "titleCase",
-      message: "Do you want to convert the title field to title-case?",
-      default: currentOptions.pointsForJane || false
+      type: "input",
+      name: "wpapiURL",
+      message: 'What is the root URL for your Wordpress API?',
+      validate: value =>
+        value.length > 0
+          ? true
+          : "The URL cannot be empty.",
+      default: currentOptions.wpapiURL
     }
-  ];
+  ]);
+  answers.wpapiURL = wpapiURL;
+  const spinner = ora("Verifying space...").start();
+  try {
+    let site = await WPAPI.discover('http://testsite.local/');
+  } catch (error) {
+    spacesSpinner.fail();
 
-  // 👉 For simple setup processes, this method can simply return
-  // an array of questions in the format expected by `inquirer`.
-  // Alternatively, it can run its own setup instance, display
-  // messages, make external calls, etc. For this, it should return
-  // a function which, when executed, must return a Promise with
-  // an answers object.
-  return async () => {
-    const spinner = ora("Crunching some numbers...").start();
+    throw error;
+  }
+  spinner.succeed();
 
-    // ⏳ await runSomeAsyncTask();
-
-    spinner.succeed();
-
-    const answers = await inquirer.prompt(questions);
-
-    return answers;
-  };
+  return answers;
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -362,6 +361,6 @@ module.exports.getOptionsFromSetup = ({
   // values generated in the setup process before they're added
   // to the configuration file.
   return {
-    titleCase: answers.titleCase
+    wpapiURL: answers.wpapiURL
   };
 };
