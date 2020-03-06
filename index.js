@@ -1,9 +1,11 @@
 const WPAPI = require('wpapi');
 const TurndownService = require('turndown');
-const turndownService = new TurndownService();
 const pkg = require("./package.json");
 
 module.exports.name = pkg.name;
+
+const turndownService = new TurndownService();
+  turndownService.keep(['figure', 'iframe'])
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                           *
