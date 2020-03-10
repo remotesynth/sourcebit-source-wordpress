@@ -1,5 +1,5 @@
 {
-  "name": "stackbit-source-wordpress",
+  "name": "sourcebit-source-wordpress",
   "version": "0.0.1",
   "description": "A source plugin for pulling Wordpress content",
   "main": "index.js",

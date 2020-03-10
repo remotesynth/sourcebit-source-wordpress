@@ -114,6 +114,7 @@ module.exports.transform = ({
 
   const normalizedPosts = entries.map(entry => {
     const normalizedEntry = {
+      source: pkg.name,
       id: entry.id,
       modelName: entry.type,
       modelLabel: entry.type.charAt(0).toUpperCase() + entry.type.slice(1) + 's',
@@ -135,6 +136,7 @@ module.exports.transform = ({
 
   const normalizedAssets = assets.map(asset => {
     const normalizedEntry = {
+      source: pkg.name,
       id: asset.id,
       modelName: '__asset',
       modelLabel: 'Assets',
@@ -155,7 +157,6 @@ module.exports.transform = ({
 
   const normalizedEntries = normalizedPosts.concat(normalizedAssets);
 
-  log(`Normalized ${normalizedEntries.length} entries`);
   return {
     ...data,
     models: data.models.concat(models),
