@@ -13,18 +13,8 @@ module.exports.options = {
     private: true
   },
   watch: {
-    // 👉 By default, the value of this option will be `false`.
     default: false,
-
-    // 👉 The value for this option will be read from the `watch`
-    // runtime parameter, which means that if the user starts
-    // Sourcebit with `sourcebit fetch --watch`, then the value
-    // of this option will be set to `true`, regardless of any
-    // other value defined in the configuration file.
     runtimeParameter: "watch"
-  },
-  titleCase: {
-    default: false
   }
 };
 
@@ -38,11 +28,11 @@ module.exports.bootstrap = async ({
 }) => {
 
   const context = getPluginContext();
+  const site = await WPAPI.discover(options.wpapiURL);
 
   if (context && context.entries) {
     log(`Loaded ${context.entries.length} entries from cache`);
   } else {
-    const site = await WPAPI.discover('http://testsite.local/');
     const posts = await site.posts();
     const pages = await site.pages();
     const entries = posts.concat(pages);
@@ -79,25 +69,50 @@ module.exports.bootstrap = async ({
     });
   }
 
-  // 👉 If the `watch` option is enabled, we set up a polling routine
-  // that checks for changes in the data source. In a real-world plugin,
-  // you'd be doing things like making regular calls to an API to check
-  // whenever something changes.
   if (options.watch) {
-    setInterval(() => {
-      const { entries } = getPluginContext();
-      const entryIndex = Math.floor(Math.random() * entries.length);
+    setInterval(async () => {
+      const { assets, entries } = getPluginContext();
+      const posts = await site.posts();
+      const pages = await site.pages();
+      const allEntries = posts.concat(pages);
+      const media = await site.media();
+      let entryUpdateCompleted = false;
 
-      entries[entryIndex].body = entries[entryIndex].body + " (updated)";
+      // Handling updated assets.
+      media.forEach(asset => {
+        const index = assets.findIndex((item) => item.id === asset.id);
 
-      log(`Updated entry #${entryIndex}`);
-      debug("Updated entries: %O", entries);
+        if (index !== -1) {
+          let newUpdateDate = new Date(asset.modified);
+          let lastUpdateDate = new Date(assets[index].modified);
+          if (newUpdateDate > lastUpdateDate) {
+            assets[index] = asset;
+            entryUpdateCompleted = true;
+          }
+        }
+      });
+      // handling entry updates
+      allEntries.forEach(entry => {
+        const index = entries.findIndex((item) => item.id === entry.id);
 
-      // 👉 We take the new entries array and update the plugin context.
-      setPluginContext({ entries });
+        if (index !== -1) {
+          let newUpdateDate = new Date(entry.modified);
+          let lastUpdateDate = new Date(entries[index].modified);
+          console.log(newUpdateDate.toDateString() + ' : ' + lastUpdateDate.toDateString() + ' : ' + (newUpdateDate > lastUpdateDate));
+          if (newUpdateDate > lastUpdateDate) {
+            entries[index] = entry;
+            entryUpdateCompleted = true;
+          }
+        }
+      });
 
-      // 👉 After updating the context, we must communicate the change and
-      // the need for all plugins to re-run in order to act on the new data.
+      if (entryUpdateCompleted)
+        log(`Updated entries`);
+      else
+        return;
+
+      setPluginContext(assets,entries);
+
       refresh();
     }, 3000);
   }
