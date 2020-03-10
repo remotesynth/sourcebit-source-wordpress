@@ -26,7 +26,6 @@ turndownService.keep(['iframe']);
         const pages = await site.pages();
         const entries = posts.concat(pages);
         const assets = await site.media();
-        console.log(entries);
         const normalizedPosts = entries.map(entry => {
             const normalizedEntry = {
               id: entry.id,
@@ -68,7 +67,7 @@ turndownService.keep(['iframe']);
           });
         
           const normalizedEntries = normalizedPosts.concat(normalizedAssets);
-        //console.log(normalizedEntries);
+        console.log(normalizedEntries);
     }
     catch (error) {
         console.log(error);

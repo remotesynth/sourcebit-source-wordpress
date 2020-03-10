@@ -47,20 +47,23 @@ module.exports.bootstrap = async ({
     const pages = await site.pages();
     const entries = posts.concat(pages);
     const assets = await site.media();
+    const fieldnames = ['title','content','excerpt','date','slug'];
     const models = [
       {
+        id: 1,
         source: pkg.name,
         modelName: 'post',
         modelLabel: 'Posts',
-        fieldNames: Object.keys(posts),
+        fieldNames: fieldnames,
         projectId: '',
         projectEnvironment: ''
       },
       {
+        id: 2,
         source: pkg.name,
         modelName: 'page',
         modelLabel: 'Pages',
-        fieldNames: Object.keys(pages),
+        fieldNames: fieldnames,
         projectId: '',
         projectEnvironment: ''
       }
@@ -112,7 +115,6 @@ module.exports.transform = ({
   const normalizedPosts = entries.map(entry => {
     const normalizedEntry = {
       id: entry.id,
-      title: turndownService.turndown(entry.title.rendered),
       modelName: entry.type,
       modelLabel: entry.type.charAt(0).toUpperCase() + entry.type.slice(1) + 's',
       projectId: '',
@@ -122,9 +124,11 @@ module.exports.transform = ({
     }
 
     return {
-      title: normalizedEntry.title,
+      title: turndownService.turndown(entry.title.rendered),
       content: turndownService.turndown(entry.content.rendered),
       excerpt: turndownService.turndown(entry.content.rendered),
+      date: entry.date,
+      slug: entry.slug,
       __metadata: normalizedEntry
     };
   });
@@ -132,7 +136,6 @@ module.exports.transform = ({
   const normalizedAssets = assets.map(asset => {
     const normalizedEntry = {
       id: asset.id,
-      title: turndownService.turndown(asset.title.rendered),
       modelName: '__asset',
       modelLabel: 'Assets',
       projectId: '',
@@ -142,7 +145,7 @@ module.exports.transform = ({
     }
 
     return {
-      title: normalizedEntry.title,
+      title: turndownService.turndown(asset.title.rendered),
       contentType: asset.mime_type,
       fileName: asset.media_details.sizes.full.file,
       url: asset.media_details.sizes.full.source_url,
