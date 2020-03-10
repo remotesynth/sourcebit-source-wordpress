@@ -226,8 +226,8 @@ module.exports.transform = ({
       createdAt: asset.date,
       updatedAt: asset.modified,
       contentType: asset.mime_type,
-      fileName: asset.media_details.sizes.full.source_url,
-      url: ''
+      fileName: asset.media_details.sizes.full.file,
+      url: asset.media_details.sizes.full.source_url
     }
 
     return {
@@ -285,7 +285,7 @@ module.exports.transform = ({
  *    plugins during the setup process.                      *
  *                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-module.exports.getSetup = async ({
+module.exports.getSetup = ({
   chalk,
   context,
   currentOptions,
@@ -296,31 +296,31 @@ module.exports.getSetup = async ({
   ora,
   setSetupContext
 }) => {
-  const answers = {};
-  const { wpapiURL } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "wpapiURL",
-      message: 'What is the root URL for your Wordpress API?',
-      validate: value =>
-        value.length > 0
-          ? true
-          : "The URL cannot be empty.",
-      default: currentOptions.wpapiURL
+  return async () => {
+    const answers = {};
+    const { wpapiURL } = await inquirer.prompt([
+      {
+        type: "input",
+        name: "wpapiURL",
+        message: 'What is the root URL for your Wordpress API?',
+        validate: value =>
+          value.length > 0
+            ? true
+            : "The URL cannot be empty.",
+        default: currentOptions.wpapiURL
+      }
+    ]);
+    answers.wpapiURL = wpapiURL;
+    const spinner = ora("Verifying space...").start();
+    try {
+      let site = await WPAPI.discover(answers.wpapiURL);
+    } catch (error) {
+      spacesSpinner.fail();
+      throw error;
     }
-  ]);
-  answers.wpapiURL = wpapiURL;
-  const spinner = ora("Verifying space...").start();
-  try {
-    let site = await WPAPI.discover('http://testsite.local/');
-  } catch (error) {
-    spacesSpinner.fail();
-
-    throw error;
+    spinner.succeed();
+    return answers;
   }
-  spinner.succeed();
-
-  return answers;
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
