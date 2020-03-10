@@ -7,37 +7,9 @@ module.exports.name = pkg.name;
 const turndownService = new TurndownService();
   turndownService.keep(['figure', 'iframe'])
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                                                           *
- *  📌 options (Object)                                      *
- *     =======                                               *
- *                                                           *
- *  The options expected by the plugin, as an object. Each   *
- *  key represents an option. The values are objects with    *
- *  one or more of the following keys:                       *
- *                                                           *
- *  - `default` (Any): The value to be used for this option  *
- *    in case one hasn't been supplied.                      *
- *  - `env` (String): The name of an environment variable    *
- *    to read the value from.                                *
- *  - `private` (Boolean): Whether this option represents    *
- *    sensitive information and therefore should be stored   *
- *    in a `.env` file, rather than the main configuration   *
- *    file.                                                  *
- *  - `runtimeParameter` (String): The name of a runtime     *
- *    parameter (e.g. CLI parameter) to read the value from. *
- *    When present, the value of the parameter overrides any *
- *    value defined in the configuration file.               *
- *                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.options = {
   wpapiURL: {
-    // 👉 The value will be read from `process.env.MY_SECRET`.
     env: "WPAPI_URL",
-
-    // 👉 When running the interactive setup process, this
-    // option will be stored in an `.env` file instead of the
-    // main configuration file.
     private: true
   },
   watch: {
@@ -56,34 +28,6 @@ module.exports.options = {
   }
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                                                           *
- *  📌 bootstrap (Function)                                  *
- *     =========                                             *
- *                                                           *
- *  A function to be executed once when the plugin starts.   *
- *  It receives an object with the following properties:     *
- *                                                           *
- *  - `debug` (Function): A method for printing data that    *
- *    might be useful to see when debugging the plugin.      *
- *    Data sent to this method will be hidden from the user  *
- *    unless the application is in debug mode.               *
- *  - `getPluginContext` (Function): A function for getting  *
- *    the plugin's context object.                           *
- *  - `log` (Function): A method for logging a message. It   *
- *    adds a prefix with the name of the plugin that created *
- *    it, and respects the verbosity settings specified by   *
- *    the user.                                              *
- *  - `options` (Object): The plugin options object, as they *
- *    come from the main configuration file, `.env` files    *
- *    and runtime parameters.                                *
- *  - `refresh` (Function): A function to be called whenever *
- *    there are changes in the data managed by the plugin,   *
- *    forcing the entire plugin chain to be re-executed.     *
- *  - `setPluginContext` (Function): A function for setting  *
- *    the plugin's context object                            *
- *                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.bootstrap = async ({
   debug,
   getPluginContext,
@@ -156,38 +100,6 @@ module.exports.bootstrap = async ({
   }
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                                                           *
- *  📌 transform (Function)                                  *
- *     =========                                             *
- *                                                           *
- *  A function to be executed once when the plugin starts    *
- *  and whenever one of the plugins triggers an update       *
- *  (i.e. by calling `refresh()` inside `bootstrap()`).      *
- *  Its purpose is to receive and transform an object that   *
- *  contains data buckets, which are arrays of entries.      *
- *  Therefore, the return value of this method must be a     *
- *  new data object.                                         *
- *  Please note that in the first execution, `transform`     *
- *  always runs after `bootstrap()`.                         *
- *  It receives an object with the following properties:     *
- *                                                           *
- *  - `data` (Object): The input data object, containing     *
- *    data buckets.                                          *
- *  - `debug` (Function): A method for printing data that    *
- *    might be useful to see when debugging the plugin.      *
- *    Data sent to this method will be hidden from the user  *
- *    unless the application is in debug mode.               *
- *  - `getPluginContext` (Function): A function for getting  *
- *    the plugin's context object.                           *
- *  - `log` (Function): An alias for `console.log` that adds *
- *    to the message information about the plugin it comes   *
- *    from.                                                  *
- *  - `options` (Object): The plugin options object, as they *
- *    come from the main configuration file, `.env` files    *
- *    and runtime parameters.                                *
- *                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.transform = ({
   data,
   debug,
@@ -211,6 +123,8 @@ module.exports.transform = ({
 
     return {
       title: normalizedEntry.title,
+      content: turndownService.turndown(entry.content.rendered),
+      excerpt: turndownService.turndown(entry.content.rendered),
       __metadata: normalizedEntry
     };
   });
@@ -225,13 +139,13 @@ module.exports.transform = ({
       projectEnvironment: '',
       createdAt: asset.date,
       updatedAt: asset.modified,
-      contentType: asset.mime_type,
-      fileName: asset.media_details.sizes.full.file,
-      url: asset.media_details.sizes.full.source_url
     }
 
     return {
       title: normalizedEntry.title,
+      contentType: asset.mime_type,
+      fileName: asset.media_details.sizes.full.file,
+      url: asset.media_details.sizes.full.source_url,
       __metadata: normalizedEntry
     };
   });
@@ -246,45 +160,6 @@ module.exports.transform = ({
   };
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                                                           *
- *  📌 getSetup (Function)                                   *
- *     ========                                              *
- *                                                           *
- *  A function to be executed as part of the interactive     *
- *  setup process for this plugin.                           *
- *  It receives an object with the following properties:     *
- *                                                           *
- *  - `chalk` (Function): An instance of the `chalk` npm     *
- *    module (https://www.npmjs.com/package/chalk), used in  *
- *    the command-line interface for styling text.           *
- *  - `context` (Object): The global context object, shared  *
- *    by all plugins.                                        *
- *  - `currentOptions` (Object): The options for this plugin *
- *    present in an existing configuration file, if found.   *
- *  - `data` (Object): The data object populated by all      *
- *    previous plugins.                                      *
- *    data buckets.                                          *
- *  - `debug` (Function): A method for printing data that    *
- *    might be useful to see when debugging the plugin.      *
- *    Data sent to this method will be hidden from the user  *
- *    unless the application is in debug mode.               *
- *  - `getSetupContext` (Function): A function for getting   *
- *    the context object that is shared between all the      *
- *    plugins during the setup process.                      *
- *  - `inquirer` (Function): An instance of the `inquirer`   *
- *    npm module (https://www.npmjs.com/package/inquirer),   *
- *    used in the command-line interface to prompt questions *
- *    to the user.                                           *
- *  - `ora` (Function): An instance of the `ora` npm module  *
- *    (https://www.npmjs.com/package/ora), used in the       *
- *    command-line interface to display information and      *
- *    error messages, as well as loading states.             *
- *  - `setSetupContext` (Function): A function for setting   *
- *    the context object that is shared between all the      *
- *    plugins during the setup process.                      *
- *                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.getSetup = ({
   chalk,
   context,
@@ -323,43 +198,12 @@ module.exports.getSetup = ({
   }
 };
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                                                           *
- *  📌 getOptionsFromSetup (Function)                        *
- *     ===================                                   *
- *                                                           *
- *  A function to be executed after the interactive has      *
- *  finished.                                                *
- *  It receives an object with the following properties:     *
- *                                                           *
- *  - `answers` (Object): The answers generated during the   *
- *    interactive setup process.                             *
- *    data buckets.                                          *
- *  - `debug` (Function): A method for printing data that    *
- *    might be useful to see when debugging the plugin.      *
- *    Data sent to this method will be hidden from the user  *
- *    unless the application is in debug mode.               *
- *  - `getSetupContext` (Function): A function for getting   *
- *    the context object that is shared between all the      *
- *    plugins during the setup process.                      *
- *  - `setSetupContext` (Function): A function for setting   *
- *    the context object that is shared between all the      *
- *    plugins during the setup process.                      *
- *                                                           *
- *  The return value of this function must be the object     *
- *  that is to be set as the `options` block of the plugin   *
- *  configuration in `sourcebit.js`.                         *
- *                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 module.exports.getOptionsFromSetup = ({
   answers,
   debug,
   getSetupContext,
   setSetupContext
 }) => {
-  // 👉 This is a good place to make some transformation to the
-  // values generated in the setup process before they're added
-  // to the configuration file.
   return {
     wpapiURL: answers.wpapiURL
   };
