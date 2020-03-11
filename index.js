@@ -98,7 +98,6 @@ module.exports.bootstrap = async ({
         if (index !== -1) {
           let newUpdateDate = new Date(entry.modified);
           let lastUpdateDate = new Date(entries[index].modified);
-          console.log(newUpdateDate.toDateString() + ' : ' + lastUpdateDate.toDateString() + ' : ' + (newUpdateDate > lastUpdateDate));
           if (newUpdateDate > lastUpdateDate) {
             entries[index] = entry;
             entryUpdateCompleted = true;
@@ -106,14 +105,14 @@ module.exports.bootstrap = async ({
         }
       });
 
-      if (entryUpdateCompleted)
+      if (entryUpdateCompleted) {
+        setPluginContext({assets,entries});
+        refresh();
         log(`Updated entries`);
+      }
       else
         return;
 
-      setPluginContext(assets,entries);
-
-      refresh();
     }, 3000);
   }
 };
