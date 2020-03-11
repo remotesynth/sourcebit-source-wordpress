@@ -5,7 +5,7 @@ const pkg = require("./package.json");
 module.exports.name = pkg.name;
 
 const turndownService = new TurndownService();
-  turndownService.keep(['figure', 'iframe'])
+  turndownService.keep(['iframe'])
 
 module.exports.options = {
   wpapiURL: {
