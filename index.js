@@ -36,7 +36,7 @@ module.exports.bootstrap = async ({
     const pages = await site.pages();
     const entries = posts.concat(pages);
     const assets = await site.media();
-    const fieldnames = ['title','content','excerpt','date','slug'];
+    const fieldnames = ['title','content','excerpt','date','slug','image'];
     const models = [
       {
         id: 1,
@@ -134,8 +134,7 @@ module.exports.transform = ({
       createdAt: entry.date,
       updatedAt: entry.modified
     }
-
-    return {
+    const post = {
       title: turndownService.turndown(entry.title.rendered),
       content: entry.content.rendered,
       excerpt: turndownService.turndown(entry.content.rendered),
@@ -143,6 +142,13 @@ module.exports.transform = ({
       slug: entry.slug,
       __metadata: normalizedEntry
     };
+
+    if (entry.featured_media) {
+      let featured_media_index = assets.findIndex((item) => item.id === entry.featured_media);
+      post.image = assets[featured_media_index].guid.rendered;
+    }
+
+    return post;
   });
 
   const normalizedAssets = assets.map(asset => {
