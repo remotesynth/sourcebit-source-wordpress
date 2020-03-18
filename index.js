@@ -109,8 +109,6 @@ module.exports.bootstrap = async ({
         refresh();
         log(`Updated entries`);
       }
-      else
-        return;
 
     }, 3000);
   }
